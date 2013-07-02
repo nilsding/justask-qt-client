@@ -9,9 +9,9 @@ set(lang translations/de.ts)
 
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} ${QJSON_INCLUDE_DIR})
 
-set(sources mainwindow.cpp settingsdialog.cpp main.cpp)
-set(headers mainwindow.h settingsdialog.h)
-set(forms mainwindow.ui settingsdialog.ui)
+set(sources questionwidget.cpp mainwindow.cpp settingsdialog.cpp main.cpp)
+set(headers mainwindow.h settingsdialog.h questionwidget.h)
+set(forms mainwindow.ui settingsdialog.ui questionwidget.ui)
 
 qt4_wrap_cpp(headers_moc ${headers})
 qt4_wrap_ui(forms_headers ${forms})

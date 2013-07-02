@@ -18,12 +18,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "settingsdialog.h"
+#include "questionwidget.h"
 
 QSettings s("nilsding", "justask-qt");
 
 QString user_name = "";
 QString api_key = "";
 QString api_endpoint = "";
+
+bool post_to_twitter_checkbox = false;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -75,6 +78,7 @@ void MainWindow::readSettings(bool window)
     s.endGroup();
 
     doHttpRequest(QUrl(api_endpoint.append("&action=info")));
+    doHttpRequest(QUrl(api_endpoint.append("&action=get_inbox")));
 }
 
 MainWindow::~MainWindow()
@@ -102,9 +106,14 @@ void MainWindow::finished(QNetworkReply *reply)
                         ui->label_gravatar->setText(res["data"].toMap()["gravatar"].toBool() ? tr("Yes") : tr("No"));
                         ui->label_twitter_on->setText(res["data"].toMap()["twitter_on"].toBool() ? tr("Yes") : tr("No"));
                         ui->label_anon_questions->setText(res["data"].toMap()["anon_questions"].toBool() ? tr("Yes") : tr("No"));
+                        post_to_twitter_checkbox = res["data"].toMap()["twitter_check"].toBool();
                         break;
                     }
                     case 1: {       // get_inbox
+                        for (int i = 0; i < res["data"].toList().count(); i++) {
+                            QuestionWidget *qw = new QuestionWidget(res["data"].toList().at(i).toMap(), post_to_twitter_checkbox);
+                            ui->scrollAreaWidgetContents->layout()->addWidget(qw);
+                        }
                         break;
                     }
                     case 2: {       // get_answers
@@ -126,10 +135,10 @@ void MainWindow::finished(QNetworkReply *reply)
                 break;
             }
         }
-        if (res["success"].toBool() == true && res["code"].toInt() == 200) {
-            QString s = QString("(").append(res["data"].toMap()["question_count"].toString()).append(") justask-qt-client");//.append(res["data"].toMap()["site_name"].toString());
-            this->setWindowTitle(s);
-        }
+//         if (res["success"].toBool() == true && res["code"].toInt() == 200) {
+//             QString s = QString("(").append(res["data"].toMap()["question_count"].toInt()).append(") justask-qt-client");
+//             this->setWindowTitle(s);
+//         }
     } else {
         qDebug() << "[e] got an error while doing the network request:" << reply->errorString();
         
