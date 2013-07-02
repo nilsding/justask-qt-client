@@ -1,6 +1,8 @@
 # justask-qt-client
 justask-qt-client is a Qt4 client for [justask](https://github.com/nilsding/justask) installations.
 
+As of now, it only shows you some information about your installation. (that's what the API is for, right?)
+
 ## Building from source
 To build justask-qt-client, you need...
 
