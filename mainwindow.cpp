@@ -94,15 +94,18 @@ void MainWindow::finished(QNetworkReply *reply)
                         break;
                     }
                     default: {      // ???
-
+                        
                     }
                 }
                 break;
             }
             case 405: {
                 QMessageBox mb;
-                mb.setWindowTitle("Error");
-                //ugh
+                mb.setWindowTitle(tr("Error"));
+                mb.setIcon(QMessageBox::Critical);
+                mb.setText("Wrong user name or API key.");
+                mb.setParent(this);
+                mb.exec();
                 break;
             }
         }
