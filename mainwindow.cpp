@@ -78,14 +78,6 @@ void MainWindow::finished(QNetworkReply *reply)
             case 200: {        // success
                 switch (knownActions.indexOf(res["action"].toString())) {
                     case 0: {       // info
-//                         QMessageBox mb;
-//                         mb.setWindowTitle(tr("Success"));
-//                         mb.setIcon(QMessageBox::Information);
-//                         mb.setText(tr("Hi, %1! You have already answered %2 questions.<br />"
-//                                       "There are %3 questions in your inbox waiting to be answered.<br /><br />Sending tweets is <strong>%4</strong> by default.")
-//                                   .arg(res["data"].toMap()["user_name"].toString()).arg(res["data"].toMap()["answer_count"].toInt()).arg(res["data"].toMap()["question_count"].toInt()).arg((res["data"].toMap()["twitter_check"].toBool()) ? tr("enabled") : tr("disabled")));
-//                         mb.setParent(this);
-//                         mb.exec();
                         ui->label_info_site_name->setText(res["data"].toMap()["site_name"].toString());
                         ui->label_user_name->setText(res["data"].toMap()["user_name"].toString());
                         ui->label_question_count->setText(res["data"].toMap()["question_count"].toString());
