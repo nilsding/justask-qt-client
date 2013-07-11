@@ -17,6 +17,7 @@
 
 #include "questionwidget.h"
 #include "ui_questionwidget.h"
+#include "mainwindow.h"
 #include <QDebug>
 
 QuestionWidget::QuestionWidget(QVariantMap question, bool twitter) : ui(new Ui::QuestionWidget), question(question)
@@ -38,12 +39,19 @@ QuestionWidget::QuestionWidget(QVariantMap question, bool twitter) : ui(new Ui::
     ui->chk_post_to_twitter->setCheckState(twitter ? Qt::Checked : Qt::Unchecked);
 }
 
+QuestionWidget::~QuestionWidget()
+{
+    delete ui;
+}
+
 int QuestionWidget::getQuestionId()
 {
     return question_id;
 }
 
-QuestionWidget::~QuestionWidget()
+void QuestionWidget::on_button_delete_clicked()
 {
-    delete ui;
+    MainWindow *w = (MainWindow*) topLevelWidget();
+    qDebug() << w;
+    w->deleteQuestion(question_id);
 }

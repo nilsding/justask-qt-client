@@ -40,6 +40,9 @@ private:
     QVariantMap question;
     int question_id;
 
+private slots:
+    void on_button_delete_clicked();
+    
 };
 
 #endif // QUESTIONWIDGET_H

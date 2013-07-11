@@ -42,7 +42,8 @@ public:
     ~MainWindow();
     void writeSettings();
     void readSettings(bool window = false);
-
+    void deleteQuestion(int question_id);
+    
 private slots:
     void finished(QNetworkReply *reply);
     void doHttpRequest(QUrl url, bool post = false, QString postData = "");

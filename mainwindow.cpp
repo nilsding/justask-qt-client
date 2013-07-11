@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     // all available actions
-    knownActions << "info" << "get_inbox" << "get_answers";
+    knownActions << "info" << "get_inbox" << "get_answers" << "delete_question";
 
     connect(nam, SIGNAL(finished(QNetworkReply *)), this, SLOT(finished(QNetworkReply *)));
 
@@ -119,8 +119,22 @@ void MainWindow::finished(QNetworkReply *reply)
                     case 2: {       // get_answers
                         break;
                     }
+                    case 3: {       // delete_question
+                        // we want to remove the QuestionWidget with the question_id here
+                        int question_id = res["data"].toInt();
+                        for (int i = 0; i < ui->scrollAreaWidgetContents->layout()->count(); i++) {
+                            QuestionWidget *qw = (QuestionWidget*) ui->scrollAreaWidgetContents->layout()->itemAt(i)->widget();
+                            qDebug() << qw;
+                            if (qw->getQuestionId() == question_id) {
+                                qDebug() << "[d] todo: remove QuestionWidget at position" << i;
+                                qw->deleteLater();
+                                break;
+                            }
+                        }
+                        break;
+                    }
                     default: {      // ???
-                        
+                        break;
                     }
                 }
                 break;
@@ -130,6 +144,15 @@ void MainWindow::finished(QNetworkReply *reply)
                 mb.setWindowTitle(tr("Error"));
                 mb.setIcon(QMessageBox::Critical);
                 mb.setText("Wrong user name or API key.");
+                mb.setParent(this);
+                mb.exec();
+                break;
+            }
+            case 500: {
+                QMessageBox mb;
+                mb.setWindowTitle(tr("Internal server error"));
+                mb.setIcon(QMessageBox::Critical);
+                mb.setText("Please try again later.");
                 mb.setParent(this);
                 mb.exec();
                 break;
@@ -215,6 +238,12 @@ void MainWindow::doHttpRequest(QUrl url, bool post, QString postData)
     } else {
         nam->get(QNetworkRequest(url));
     }
+    qDebug() << "[i] end doHttpRequest";
+}
+
+void MainWindow::deleteQuestion(int question_id)
+{
+    doHttpRequest(QUrl(api_endpoint.append("&action=delete_question&question_id=").append(QString::number(question_id))));
 }
 
 void MainWindow::on_button_update_clicked()
