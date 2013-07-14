@@ -15,43 +15,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "questionwidget.h"
-#include "ui_questionwidget.h"
-#include "mainwindow.h"
-#include <QDebug>
+#include "answerwidget.h"
+#include "ui_answerwidget.h"
 
-QuestionWidget::QuestionWidget(QVariantMap question, bool twitter) : ui(new Ui::QuestionWidget), question(question)
+AnswerWidget::AnswerWidget(QVariantMap answer, QString answered_by) : ui(new Ui::AnswerWidget), answer(answer), answered_by(answered_by)
 {
     QString question_asked_by = "";
     
-    question_id = question["question_id"].toInt();
+    answer_id = answer["answer_id"].toInt();
     
-    if (question["asker_private"].toBool()) {
+    if (answer["asker_private"].toBool()) {
         question_asked_by = tr("Anonymous");
     } else {
-        question_asked_by = question["question_asked_by"].toString();
+        question_asked_by = answer["question_asked_by"].toString();
     }
     
     ui->setupUi(this);
     
     ui->label_user_asked->setText(tr("<strong>%1</strong> asked:").arg(question_asked_by));
-    ui->label_question->setText(question["question_content"].toString());
-    ui->chk_post_to_twitter->setCheckState(twitter ? Qt::Checked : Qt::Unchecked);
+    ui->label_question->setText(answer["question_content"].toString());
+    
+    ui->label_user_answered->setText(tr("<strong>%1</strong> answered:").arg(answered_by));
+    ui->label_answer->setText(answer["answer_text"].toString());
 }
 
-QuestionWidget::~QuestionWidget()
+AnswerWidget::~AnswerWidget()
 {
     delete ui;
-}
-
-int QuestionWidget::getQuestionId()
-{
-    return question_id;
-}
-
-void QuestionWidget::on_button_delete_clicked()
-{
-    MainWindow *w = (MainWindow*) topLevelWidget();
-//     qDebug() << w;
-    w->deleteQuestion(question_id);
 }

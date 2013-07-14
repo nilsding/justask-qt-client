@@ -19,6 +19,7 @@
 #include "ui_mainwindow.h"
 #include "settingsdialog.h"
 #include "questionwidget.h"
+#include "answerwidget.h"
 
 QSettings s("nilsding", "justask-qt");
 
@@ -43,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     }
 
     // all available actions
-    knownActions << "info" << "get_inbox" << "get_answers" << "delete_question";
+    knownActions << "info" << "get_inbox" << "get_answers" << "delete_question" << "answer_question";
 
     connect(nam, SIGNAL(finished(QNetworkReply *)), this, SLOT(finished(QNetworkReply *)));
 
@@ -77,8 +78,9 @@ void MainWindow::readSettings(bool window)
     api_endpoint = s.value("installation_url", "http://").toString().append("/api.php?user_name=").append(user_name).append("&api_key=").append(api_key);
     s.endGroup();
 
-    doHttpRequest(QUrl(api_endpoint.append("&action=info")));
-    doHttpRequest(QUrl(api_endpoint.append("&action=get_inbox")));
+    doHttpRequest(QUrl(api_endpoint + "&action=info"));
+    doHttpRequest(QUrl(api_endpoint + "&action=get_inbox"));
+    doHttpRequest(QUrl(api_endpoint + "&action=get_answers"));
 }
 
 MainWindow::~MainWindow()
@@ -93,7 +95,7 @@ void MainWindow::finished(QNetworkReply *reply)
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray ba = reply->readAll();
         qDebug() << "[i] request successful!";
-        qDebug() << "[i] ==> data:" << ba;
+        qDebug() << "[i] parsing data..."; // "[i] ==> data:" << ba;
         QVariantMap res = parser.parse(ba).toMap();
         switch (res["code"].toInt()) {
             case 200: {        // success
@@ -112,25 +114,47 @@ void MainWindow::finished(QNetworkReply *reply)
                     case 1: {       // get_inbox
                         for (int i = 0; i < res["data"].toList().count(); i++) {
                             QuestionWidget *qw = new QuestionWidget(res["data"].toList().at(i).toMap(), post_to_twitter_checkbox);
-                            ui->scrollAreaWidgetContents->layout()->addWidget(qw);
+                            ui->scrollAreaInboxWidgetContents->layout()->addWidget(qw);
                         }
                         break;
                     }
                     case 2: {       // get_answers
+                        for (int i = 0; i < res["data"].toList().count(); i++) {
+                            AnswerWidget *aw = new AnswerWidget(res["data"].toList().at(i).toMap(), user_name);
+                            ui->scrollAreaAnswersWidgetContents->layout()->addWidget(aw);
+                        }
                         break;
                     }
                     case 3: {       // delete_question
                         // we want to remove the QuestionWidget with the question_id here
                         int question_id = res["data"].toInt();
-                        for (int i = 0; i < ui->scrollAreaWidgetContents->layout()->count(); i++) {
-                            QuestionWidget *qw = (QuestionWidget*) ui->scrollAreaWidgetContents->layout()->itemAt(i)->widget();
-                            qDebug() << qw;
+                        for (int i = 0; i < ui->scrollAreaInboxWidgetContents->layout()->count(); i++) {
+                            QuestionWidget *qw = (QuestionWidget*) ui->scrollAreaInboxWidgetContents->layout()->itemAt(i)->widget();
+//                             qDebug() << qw;
                             if (qw->getQuestionId() == question_id) {
-                                qDebug() << "[d] todo: remove QuestionWidget at position" << i;
                                 qw->deleteLater();
                                 break;
                             }
                         }
+                        break;
+                    }
+                    case 4: {       // answer_question
+                        break;
+                    }
+                    default: {      // ???
+                        break;
+                    }
+                }
+                break;
+            }
+            case 201: {         // inbox / answers is empty
+                switch (knownActions.indexOf(res["action"].toString())) {
+                    case 1: {       // get_inbox
+                        qDebug() << "[i] no new questions";
+                        break;
+                    }
+                    case 2: {       // get_answers
+                        qDebug() << "[i] no answers found";
                         break;
                     }
                     default: {      // ???
@@ -158,10 +182,6 @@ void MainWindow::finished(QNetworkReply *reply)
                 break;
             }
         }
-//         if (res["success"].toBool() == true && res["code"].toInt() == 200) {
-//             QString s = QString("(").append(res["data"].toMap()["question_count"].toInt()).append(") justask-qt-client");
-//             this->setWindowTitle(s);
-//         }
     } else {
         qDebug() << "[e] got an error while doing the network request:" << reply->errorString();
         
@@ -238,7 +258,6 @@ void MainWindow::doHttpRequest(QUrl url, bool post, QString postData)
     } else {
         nam->get(QNetworkRequest(url));
     }
-    qDebug() << "[i] end doHttpRequest";
 }
 
 void MainWindow::deleteQuestion(int question_id)

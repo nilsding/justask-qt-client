@@ -2,6 +2,33 @@
 <!DOCTYPE TS>
 <TS version="2.0" language="de" sourcelanguage="en">
 <context>
+    <name>AnswerWidget</name>
+    <message>
+        <source>&lt;strong&gt;Someone&lt;/strong&gt; answered:</source>
+        <translation type="unfinished">&lt;strong&gt;Jemand&lt;/strong&gt; antwortete:</translation>
+    </message>
+    <message>
+        <source>&amp;Delete</source>
+        <translation>&amp;Löschen</translation>
+    </message>
+    <message>
+        <source>&lt;strong&gt;Anonymous&lt;/strong&gt; asked:</source>
+        <translation type="unfinished">&lt;strong&gt;Unbekannt&lt;/strong&gt; fragte:</translation>
+    </message>
+    <message>
+        <source>Anonymous</source>
+        <translation type="unfinished">Unbekannt</translation>
+    </message>
+    <message>
+        <source>&lt;strong&gt;%1&lt;/strong&gt; asked:</source>
+        <translation>&lt;strong&gt;%1&lt;/strong&gt; fragte:</translation>
+    </message>
+    <message>
+        <source>&lt;strong&gt;%1&lt;/strong&gt; answered:</source>
+        <translation>&lt;strong&gt;%1&lt;/strong&gt; antwortete:</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <source>&amp;File</source>
@@ -138,6 +165,41 @@
     <message>
         <source>&amp;About</source>
         <translation>&amp;Über</translation>
+    </message>
+    <message>
+        <source>Internal server error</source>
+        <translation>Interner Serverfehler</translation>
+    </message>
+</context>
+<context>
+    <name>QuestionWidget</name>
+    <message>
+        <source>Your answer to this question</source>
+        <translation>Beantworte diese Frage</translation>
+    </message>
+    <message>
+        <source>&amp;Answer</source>
+        <translation>&amp;Antworten</translation>
+    </message>
+    <message>
+        <source>&amp;Delete</source>
+        <translation>&amp;Löschen</translation>
+    </message>
+    <message>
+        <source>&lt;strong&gt;Anonymous&lt;/strong&gt; asked:</source>
+        <translation type="unfinished">&lt;strong&gt;Unbekannt&lt;/strong&gt; fragte:</translation>
+    </message>
+    <message>
+        <source>Post to Twitter</source>
+        <translation type="unfinished">Auf Twitter teilen</translation>
+    </message>
+    <message>
+        <source>Anonymous</source>
+        <translation type="unfinished">Unbekannt</translation>
+    </message>
+    <message>
+        <source>&lt;strong&gt;%1&lt;/strong&gt; asked:</source>
+        <translation>&lt;strong&gt;%1&lt;/strong&gt; fragte:</translation>
     </message>
 </context>
 <context>
