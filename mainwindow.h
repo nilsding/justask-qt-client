@@ -43,6 +43,7 @@ public:
     void writeSettings();
     void readSettings(bool window = false);
     void deleteQuestion(int question_id);
+    void answerQuestion(int question_id, QString answer, Qt::CheckState postToTwitter);
     
 private slots:
     void finished(QNetworkReply *reply);

@@ -55,3 +55,10 @@ void QuestionWidget::on_button_delete_clicked()
 //     qDebug() << w;
     w->deleteQuestion(question_id);
 }
+
+void QuestionWidget::on_button_answer_clicked()
+{
+    MainWindow *w = (MainWindow*) topLevelWidget();
+//     qDebug() << w;
+    w->answerQuestion(question_id, ui->text_answer->toPlainText(), ui->chk_post_to_twitter->checkState());
+}

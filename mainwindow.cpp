@@ -125,7 +125,8 @@ void MainWindow::finished(QNetworkReply *reply)
                         }
                         break;
                     }
-                    case 3: {       // delete_question
+                    case 3:         // delete_question
+                    case 4: {       // answer_question
                         // we want to remove the QuestionWidget with the question_id here
                         int question_id = res["data"].toInt();
                         for (int i = 0; i < ui->scrollAreaInboxWidgetContents->layout()->count(); i++) {
@@ -136,9 +137,6 @@ void MainWindow::finished(QNetworkReply *reply)
                                 break;
                             }
                         }
-                        break;
-                    }
-                    case 4: {       // answer_question
                         break;
                     }
                     default: {      // ???
@@ -254,7 +252,9 @@ void MainWindow::doHttpRequest(QUrl url, bool post, QString postData)
     qDebug() << "[i] ==> URL:" << url;
     if (post) {
         qDebug() << "[i] ==> POST data:" << postData;
-        nam->post(QNetworkRequest(url), ba);
+        QNetworkRequest nr(url); 
+        nr.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        nam->post(nr, ba);
     } else {
         nam->get(QNetworkRequest(url));
     }
@@ -262,12 +262,23 @@ void MainWindow::doHttpRequest(QUrl url, bool post, QString postData)
 
 void MainWindow::deleteQuestion(int question_id)
 {
-    doHttpRequest(QUrl(api_endpoint.append("&action=delete_question&question_id=").append(QString::number(question_id))));
+    doHttpRequest(QUrl(api_endpoint + "&action=delete_question&question_id=" + QString::number(question_id)));
+}
+
+void MainWindow::answerQuestion(int question_id, QString answer, Qt::CheckState postToTwitter)
+{
+    QUrl params;
+    params.addQueryItem("answer", QString(QUrl::toPercentEncoding(answer)));
+    QString url = api_endpoint + "&action=answer_question&question_id=" + QString::number(question_id);
+    if (postToTwitter == Qt::Checked) {
+        url += "&post_to_twitter=true";
+    }
+    doHttpRequest(QUrl(url), true, params.toString().remove(0, 1));
 }
 
 void MainWindow::on_button_update_clicked()
 {
-    doHttpRequest(QUrl(api_endpoint.append("&action=info")));
+    doHttpRequest(QUrl(api_endpoint + "&action=info"));
 }
 
 void MainWindow::on_action_Settings_triggered()
