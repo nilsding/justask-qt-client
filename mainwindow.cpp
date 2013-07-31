@@ -27,6 +27,9 @@ QString user_name = "";
 QString api_key = "";
 QString api_endpoint = "";
 
+int last_id_inbox = 0;
+int last_id_answers = 0;
+
 bool post_to_twitter_checkbox = false;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -58,6 +61,11 @@ void MainWindow::writeSettings()
     s.setValue("size", size());
     s.setValue("pos", pos());
     s.endGroup();
+
+    s.beginGroup("last_id");
+    s.setValue("inbox", last_id_inbox);
+    s.setValue("answers", last_id_answers);
+    s.endGroup();
 }
 
 void MainWindow::readSettings(bool window)
@@ -78,14 +86,28 @@ void MainWindow::readSettings(bool window)
     api_endpoint = s.value("installation_url", "http://").toString().append("/api.php?user_name=").append(user_name).append("&api_key=").append(api_key);
     s.endGroup();
 
+    s.beginGroup("last_id");
+    last_id_inbox = s.value("inbox", 0).toInt();
+    last_id_answers = s.value("answers", 0).toInt();
+    s.endGroup();
+
     doHttpRequest(QUrl(api_endpoint + "&action=info"));
-    doHttpRequest(QUrl(api_endpoint + "&action=get_inbox"));
-    doHttpRequest(QUrl(api_endpoint + "&action=get_answers"));
+    doHttpRequest(QUrl(api_endpoint + "&action=get_inbox"/* + (last_id_inbox > 0 ? "&since_id=" + QString::number(last_id_inbox) : "")*/));
+    doHttpRequest(QUrl(api_endpoint + "&action=get_answers"/* + (last_id_answers > 0 ? "&since_id=" + QString::number(last_id_answers) : "")*/));
 }
 
 MainWindow::~MainWindow()
 {
     writeSettings();
+
+    QLayoutItem *child;
+    while ((child = ui->scrollAreaInboxWidgetContents->layout()->takeAt(0)) != 0) {
+        delete child;
+    }
+    while ((child = ui->scrollAreaAnswersWidgetContents->layout()->takeAt(0)) != 0) {
+        delete child;
+    }
+
     delete nam;
     delete ui;
 }
@@ -98,138 +120,161 @@ void MainWindow::finished(QNetworkReply *reply)
         qDebug() << "[i] parsing data..."; // "[i] ==> data:" << ba;
         QVariantMap res = parser.parse(ba).toMap();
         switch (res["code"].toInt()) {
-            case 200: {        // success
-                switch (knownActions.indexOf(res["action"].toString())) {
-                    case 0: {       // info
-                        ui->label_info_site_name->setText(res["data"].toMap()["site_name"].toString());
-                        ui->label_user_name->setText(res["data"].toMap()["user_name"].toString());
-                        ui->label_question_count->setText(res["data"].toMap()["question_count"].toString());
-                        ui->label_answer_count->setText(res["data"].toMap()["answer_count"].toString());
-                        ui->label_gravatar->setText(res["data"].toMap()["gravatar"].toBool() ? tr("Yes") : tr("No"));
-                        ui->label_twitter_on->setText(res["data"].toMap()["twitter_on"].toBool() ? tr("Yes") : tr("No"));
-                        ui->label_anon_questions->setText(res["data"].toMap()["anon_questions"].toBool() ? tr("Yes") : tr("No"));
-                        post_to_twitter_checkbox = res["data"].toMap()["twitter_check"].toBool();
-                        break;
+        case 200: {        // success
+            switch (knownActions.indexOf(res["action"].toString())) {
+            case 0: {       // info
+                ui->label_info_site_name->setText(res["data"].toMap()["site_name"].toString());
+                ui->label_user_name->setText(res["data"].toMap()["user_name"].toString());
+                ui->label_question_count->setText(res["data"].toMap()["question_count"].toString());
+                ui->label_answer_count->setText(res["data"].toMap()["answer_count"].toString());
+                ui->label_gravatar->setText(res["data"].toMap()["gravatar"].toBool() ? tr("Yes") : tr("No"));
+                ui->label_twitter_on->setText(res["data"].toMap()["twitter_on"].toBool() ? tr("Yes") : tr("No"));
+                ui->label_anon_questions->setText(res["data"].toMap()["anon_questions"].toBool() ? tr("Yes") : tr("No"));
+                post_to_twitter_checkbox = res["data"].toMap()["twitter_check"].toBool();
+                break;
+            }
+            case 1: {       // get_inbox
+                for (int i = 0; i < res["data"].toList().count(); i++) {
+                    QuestionWidget *qw = new QuestionWidget(res["data"].toList().at(i).toMap(), post_to_twitter_checkbox);
+                    ui->scrollAreaInboxWidgetContents->layout()->addWidget(qw);
+                    if (res["data"].toList().at(i).toMap()["question_id"].toInt() > last_id_inbox) {
+                        last_id_inbox = res["data"].toList().at(i).toMap()["question_id"].toInt();
                     }
-                    case 1: {       // get_inbox
-                        for (int i = 0; i < res["data"].toList().count(); i++) {
-                            QuestionWidget *qw = new QuestionWidget(res["data"].toList().at(i).toMap(), post_to_twitter_checkbox);
-                            ui->scrollAreaInboxWidgetContents->layout()->addWidget(qw);
-                        }
-                        break;
+                }
+                break;
+            }
+            case 2: {       // get_answers
+                for (int i = 0; i < res["data"].toList().count(); i++) {
+                    AnswerWidget *aw = new AnswerWidget(res["data"].toList().at(i).toMap(), user_name);
+                    ui->scrollAreaAnswersWidgetContents->layout()->addWidget(aw);
+                    if (res["data"].toList().at(i).toMap()["answer_id"].toInt() > last_id_answers) {
+                        last_id_answers = res["data"].toList().at(i).toMap()["answer_id"].toInt();
                     }
-                    case 2: {       // get_answers
-                        for (int i = 0; i < res["data"].toList().count(); i++) {
-                            AnswerWidget *aw = new AnswerWidget(res["data"].toList().at(i).toMap(), user_name);
-                            ui->scrollAreaAnswersWidgetContents->layout()->addWidget(aw);
-                        }
-                        break;
-                    }
-                    case 3:         // delete_question
-                    case 4: {       // answer_question
-                        // we want to remove the QuestionWidget with the question_id here
-                        int question_id = res["data"].toInt();
-                        for (int i = 0; i < ui->scrollAreaInboxWidgetContents->layout()->count(); i++) {
-                            QuestionWidget *qw = (QuestionWidget*) ui->scrollAreaInboxWidgetContents->layout()->itemAt(i)->widget();
+                }
+                break;
+            }
+            case 3:         // delete_question
+            case 4: {       // answer_question
+                // we want to remove the QuestionWidget with the question_id here
+                int question_id = res["data"].toInt();
+                for (int i = 0; i < ui->scrollAreaInboxWidgetContents->layout()->count(); i++) {
+                    QuestionWidget *qw = (QuestionWidget *) ui->scrollAreaInboxWidgetContents->layout()->itemAt(i)->widget();
 //                             qDebug() << qw;
-                            if (qw->getQuestionId() == question_id) {
-                                qw->deleteLater();
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                    default: {      // ???
+                    if (qw->getQuestionId() == question_id) {
+                        qw->deleteLater();
                         break;
                     }
                 }
                 break;
             }
-            case 201: {         // inbox / answers is empty
-                switch (knownActions.indexOf(res["action"].toString())) {
-                    case 1: {       // get_inbox
-                        qDebug() << "[i] no new questions";
-                        break;
-                    }
-                    case 2: {       // get_answers
-                        qDebug() << "[i] no answers found";
-                        break;
-                    }
-                    default: {      // ???
-                        break;
-                    }
+            default: {      // ???
+                break;
+            }
+            }
+            break;
+        }
+        case 201: {         // inbox / answers is empty
+            switch (knownActions.indexOf(res["action"].toString())) {
+            case 1: {       // get_inbox
+                qDebug() << "[i] no new questions";
+                break;
+            }
+            case 2: {       // get_answers
+                qDebug() << "[i] no answers found";
+                break;
+            }
+            default: {      // ???
+                break;
+            }
+            }
+            break;
+        }
+        case 405: {
+            QMessageBox mb;
+            mb.setWindowTitle(tr("Error"));
+            mb.setIcon(QMessageBox::Critical);
+            mb.setText(tr("Wrong user name or API key."));
+            mb.setParent(this);
+            mb.exec();
+            break;
+        }
+        case 410: {
+            int question_id = res["data"].toInt();
+            for (int i = 0; i < ui->scrollAreaInboxWidgetContents->layout()->count(); i++) {
+                QuestionWidget *qw = (QuestionWidget *) ui->scrollAreaInboxWidgetContents->layout()->itemAt(i)->widget();
+                if (qw->getQuestionId() == question_id) {
+                    qw->setEnabled(true);
+                    break;
                 }
-                break;
             }
-            case 405: {
-                QMessageBox mb;
-                mb.setWindowTitle(tr("Error"));
-                mb.setIcon(QMessageBox::Critical);
-                mb.setText("Wrong user name or API key.");
-                mb.setParent(this);
-                mb.exec();
-                break;
-            }
-            case 500: {
-                QMessageBox mb;
-                mb.setWindowTitle(tr("Internal server error"));
-                mb.setIcon(QMessageBox::Critical);
-                mb.setText("Please try again later.");
-                mb.setParent(this);
-                mb.exec();
-                break;
-            }
+            QMessageBox mb;
+            mb.setWindowTitle(tr("Information"));
+            mb.setIcon(QMessageBox::Information);
+            mb.setText(tr("The answer you've entered is empty."));
+            mb.setParent(this);
+            mb.exec();
+            break;
+        }
+        case 500: {
+            QMessageBox mb;
+            mb.setWindowTitle(tr("Internal server error"));
+            mb.setIcon(QMessageBox::Critical);
+            mb.setText(tr("Please try again later."));
+            mb.setParent(this);
+            mb.exec();
+            break;
+        }
         }
     } else {
         qDebug() << "[e] got an error while doing the network request:" << reply->errorString();
-        
+
         QMessageBox mb;
         mb.setWindowTitle(tr("Error"));
         mb.setIcon(QMessageBox::Critical);
         switch (reply->error()) {
-            case QNetworkReply::NoError: {
-                mb.setText(tr("No error occurred.<br />Congratulations, you found aBug&trade;"));
-                break;
-            }
-            case QNetworkReply::ConnectionRefusedError: {
-                mb.setText(tr("Connection refused"));
-                break;
-            }
-            case QNetworkReply::RemoteHostClosedError: {
-                mb.setText(tr("The remote host closed the connection."));
-                break;
-            }
-            case QNetworkReply::HostNotFoundError: {
-                mb.setText(tr("Host not found."));
-                break;
-            }
-            case QNetworkReply::TimeoutError: {
-                mb.setText(tr("The connection timed out."));
-                break;
-            }
-            case QNetworkReply::SslHandshakeFailedError: {
-                mb.setText(tr("The SSL/TLS handshake failed."));
-                break;
-            }
-            case QNetworkReply::TemporaryNetworkFailureError: {
-                mb.setText(tr("The connection was broken due to disconnection from the network, however the system has initiated roaming to another access point."));
-                break;
-            }
-            case QNetworkReply::ContentAccessDenied: {
-                mb.setText(tr("HTTP 401: Access denied."));
-                break;
-            }
-            case QNetworkReply::ContentNotFoundError: {
-                mb.setText(tr("HTTP 404: File not found."));
-                break;
-            }
-            case QNetworkReply::UnknownNetworkError: {
-                mb.setText(tr("Network error."));
-                break;
-            }
-            default: {
-                mb.setText(tr("Unknown error."));
-            }
+        case QNetworkReply::NoError: {
+            mb.setText(tr("No error occurred.<br />Congratulations, you found aBug&trade;"));
+            break;
+        }
+        case QNetworkReply::ConnectionRefusedError: {
+            mb.setText(tr("Connection refused"));
+            break;
+        }
+        case QNetworkReply::RemoteHostClosedError: {
+            mb.setText(tr("The remote host closed the connection."));
+            break;
+        }
+        case QNetworkReply::HostNotFoundError: {
+            mb.setText(tr("Host not found."));
+            break;
+        }
+        case QNetworkReply::TimeoutError: {
+            mb.setText(tr("The connection timed out."));
+            break;
+        }
+        case QNetworkReply::SslHandshakeFailedError: {
+            mb.setText(tr("The SSL/TLS handshake failed."));
+            break;
+        }
+        case QNetworkReply::TemporaryNetworkFailureError: {
+            mb.setText(tr("The connection was broken due to disconnection from the network, however the system has initiated roaming to another access point."));
+            break;
+        }
+        case QNetworkReply::ContentAccessDenied: {
+            mb.setText(tr("HTTP 401: Access denied."));
+            break;
+        }
+        case QNetworkReply::ContentNotFoundError: {
+            mb.setText(tr("HTTP 404: File not found."));
+            break;
+        }
+        case QNetworkReply::UnknownNetworkError: {
+            mb.setText(tr("Network error."));
+            break;
+        }
+        default: {
+            mb.setText(tr("Unknown error."));
+        }
         }
         mb.setParent(this);
         mb.exec();
@@ -252,7 +297,7 @@ void MainWindow::doHttpRequest(QUrl url, bool post, QString postData)
     qDebug() << "[i] ==> URL:" << url;
     if (post) {
         qDebug() << "[i] ==> POST data:" << postData;
-        QNetworkRequest nr(url); 
+        QNetworkRequest nr(url);
         nr.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         nam->post(nr, ba);
     } else {
@@ -279,6 +324,16 @@ void MainWindow::answerQuestion(int question_id, QString answer, Qt::CheckState 
 void MainWindow::on_button_update_clicked()
 {
     doHttpRequest(QUrl(api_endpoint + "&action=info"));
+}
+
+void MainWindow::on_button_update_inbox_clicked()
+{
+    doHttpRequest(QUrl(api_endpoint + "&action=get_inbox" + (last_id_inbox > 0 ? "&since_id=" + QString::number(last_id_inbox) : "")));
+}
+
+void MainWindow::on_button_update_answers_clicked()
+{
+    doHttpRequest(QUrl(api_endpoint + "&action=get_answers" + (last_id_answers > 0 ? "&since_id=" + QString::number(last_id_answers) : "")));
 }
 
 void MainWindow::on_action_Settings_triggered()

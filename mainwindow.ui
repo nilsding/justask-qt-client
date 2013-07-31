@@ -21,6 +21,20 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_info_site_name">
+      <property name="font">
+       <font>
+        <pointsize>18</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string notr="true">???</string>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="tabPosition">
@@ -37,20 +51,27 @@
         <string>Information</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="2" column="0" colspan="2">
-         <spacer name="verticalSpacer">
+        <item row="0" column="1">
+         <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>20</width>
-            <height>40</height>
+            <width>40</width>
+            <height>20</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item row="1" column="0" colspan="2">
+        <item row="0" column="2">
+         <widget class="QPushButton" name="button_update">
+          <property name="text">
+           <string>&amp;Update</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
          <layout class="QFormLayout" name="formLayout">
           <property name="fieldGrowthPolicy">
            <enum>QFormLayout::FieldsStayAtSizeHint</enum>
@@ -177,15 +198,15 @@
           </item>
          </layout>
         </item>
-        <item row="4" column="1">
-         <widget class="QPushButton" name="button_update">
-          <property name="text">
-           <string>&amp;Update</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <spacer name="horizontalSpacer">
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_inbox">
+       <attribute name="title">
+        <string>Inbox</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -197,14 +218,14 @@
           </property>
          </spacer>
         </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_inbox">
-       <attribute name="title">
-        <string>Inbox</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="button_update_inbox">
+          <property name="text">
+           <string>&amp;Update</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
          <widget class="QScrollArea" name="scrollAreaInbox">
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -224,7 +245,7 @@
              <x>0</x>
              <y>0</y>
              <width>468</width>
-             <height>211</height>
+             <height>184</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2"/>
@@ -238,7 +259,27 @@
         <string>Answers</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="button_update_answers">
+          <property name="text">
+           <string>&amp;Update</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="1" column="0" colspan="2">
          <widget class="QScrollArea" name="scrollAreaAnswers">
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -258,7 +299,7 @@
              <x>0</x>
              <y>0</y>
              <width>468</width>
-             <height>211</height>
+             <height>184</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3"/>
@@ -267,20 +308,6 @@
         </item>
        </layout>
       </widget>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QLabel" name="label_info_site_name">
-      <property name="font">
-       <font>
-        <pointsize>18</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string notr="true">???</string>
-      </property>
      </widget>
     </item>
    </layout>

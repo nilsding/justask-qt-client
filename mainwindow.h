@@ -50,6 +50,8 @@ private slots:
     void doHttpRequest(QUrl url, bool post = false, QString postData = "");
     
     void on_button_update_clicked();
+    void on_button_update_inbox_clicked();
+    void on_button_update_answers_clicked();
     void on_action_Settings_triggered();
     void on_action_AboutQt_triggered();
     void on_action_About_triggered();

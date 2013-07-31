@@ -54,6 +54,7 @@ void QuestionWidget::on_button_delete_clicked()
     MainWindow *w = (MainWindow*) topLevelWidget();
 //     qDebug() << w;
     w->deleteQuestion(question_id);
+    this->setEnabled(false);
 }
 
 void QuestionWidget::on_button_answer_clicked()
@@ -61,4 +62,5 @@ void QuestionWidget::on_button_answer_clicked()
     MainWindow *w = (MainWindow*) topLevelWidget();
 //     qDebug() << w;
     w->answerQuestion(question_id, ui->text_answer->toPlainText(), ui->chk_post_to_twitter->checkState());
+    this->setEnabled(false);
 }
